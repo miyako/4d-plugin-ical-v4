@@ -1,0 +1,76 @@
+{
+    "name": "iCal v3",
+    "id": 20000,
+    "commands": [
+        {
+            "theme": "iCal Calendar Store",
+            "syntax": "iCal Request permisson:J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar Store",
+            "syntax": "iCal QUERY EVENT(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar Store",
+            "syntax": "iCal GET CALENDAR LIST:J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar",
+            "syntax": "iCal Create calendar(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar",
+            "syntax": "iCal Set calendar property(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar",
+            "syntax": "iCal Get calendar property(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar",
+            "syntax": "iCal Remove calendar(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Event",
+            "syntax": "iCal Create event(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Event",
+            "syntax": "iCal Set event property(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Event",
+            "syntax": "iCal Get event property(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Event",
+            "syntax": "iCal Remove event(&J):J",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Calendar",
+            "syntax": "iCal Get default calendar:J",
+            "threadSafe": true
+        },
+        {
+            "theme": "Notification",
+            "syntax": "iCal SET NOTIFICATION METHOD(&T)",
+            "threadSafe": false
+        },
+        {
+            "theme": "Notification",
+            "syntax": "iCal Get notification method:T",
+            "threadSafe": true
+        }
+    ]
+}
