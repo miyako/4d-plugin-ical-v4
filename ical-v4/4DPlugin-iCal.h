@@ -19,7 +19,6 @@
 #import <Cocoa/Cocoa.h>
 #import <EventKit/EventKit.h>
 #import <Security/Security.h>
-#import <CalendarStore/CalendarStore.h>
 
 #include "C_TEXT.h"
 
@@ -82,8 +81,6 @@ typedef enum
     notification_delete = 2
     
 } notification_t;
-
-#define USE_EK_CALENDAR_ITEM 1
 
 //TODO: return in event (read only) alarms, attendees, recurrenceRule
 

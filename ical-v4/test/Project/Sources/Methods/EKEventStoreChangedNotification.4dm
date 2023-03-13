@@ -1,6 +1,26 @@
 //%attributes = {}
-#DECLARE($info : Text)
+/*
 
-$message:=Split string:C1554($info; "\t")
+callback received no parameters
 
-ALERT:C41("URI:"+$message[0]+"\rUID:"+$message[1])
+*/
+
+$options:=New object:C1471
+
+
+$options.startDate:=Add to date:C393(Current date:C33; 0; 0; -1)
+$options.endDate:=Add to date:C393(Current date:C33; 0; 0; 1)
+
+/*
+optinally pass in $options.calendars
+a. collection of calendar names
+b. collection of objects where .uid == calendar ID
+*/
+
+$status:=iCal QUERY EVENT($options)
+
+If ($status.success)
+	
+	$uid:=$status.events.extract("uid")
+	
+End if 
