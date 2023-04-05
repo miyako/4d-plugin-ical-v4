@@ -16,15 +16,9 @@ iCal SET NOTIFICATION METHOD($method)
 $method:=iCal Get notification method()
 ```
 
-<div class="grid">
-  <div class="syntax-th cell cell--2">Parameter</div>
-  <div class="syntax-th cell cell--2">Type</div>
-  <div class="syntax-th cell cell--8">Description</div>
-  <div class="syntax-td cell cell--2">method</div>
-  <div class="syntax-td cell cell--2">TEXT</div>
-  <div class="syntax-td cell cell--8">callback method name</div>          
-</div>
-
+|Parameter|Type|Description|
+|:-:|:-:|:-:|
+|method|TEXT|callback method name|
 
 The callback method receives no parameters. You can perform a query to get the latest events.
 
