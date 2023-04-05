@@ -7,3 +7,4 @@
 
 iCal API with notification support
 
+See [v3 documentation](https://github.com/miyako/4d-plugin-ical-v3) for basic information.
