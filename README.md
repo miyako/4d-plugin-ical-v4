@@ -45,3 +45,5 @@ If ($status.success)
 	
 End if 
 ```
+
+The method is invoked for every [`EKEventStoreChangedNotification`](https://developer.apple.com/documentation/eventkit/ekeventstorechangednotification).
