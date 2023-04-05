@@ -46,6 +46,6 @@ If ($status.success)
 End if 
 ```
 
-The method is invoked for every [`EKEventStoreChangedNotification`](https://developer.apple.com/documentation/eventkit/ekeventstorechangednotification). According to Apple specification
+The method is invoked for every [`EKEventStoreChangedNotification`](https://developer.apple.com/documentation/eventkit/ekeventstorechangednotification). 
 
 > This notification is posted whenever changes are made to the Calendar database, including adding, removing, and changing events or reminders. Individual changes are not described.
