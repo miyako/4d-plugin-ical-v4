@@ -35,10 +35,6 @@ EKEventStore *_getDefaultCalendarStore() {
     return defaultCalendarStore;
 }
 
-void _releaseCalendarStore(EKEventStore *calendarStore) {
-    
-}
-
 #pragma mark Notification
 
 #define MAX_PROCESS_NAME 256
@@ -164,6 +160,11 @@ static void OnCloseProcess()
     if(IsProcessOnExit())
     {
         listenerLoopFinish();
+        
+        if(defaultCalendarStore) {
+            [defaultCalendarStore release];
+            defaultCalendarStore = nil;
+        }
     }
 }
 
@@ -1273,7 +1274,6 @@ void iCal_Create_event(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     PA_ReturnObject(params, status);
@@ -1341,7 +1341,6 @@ void iCal_Set_event_property(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     PA_ReturnObject(params, status);
@@ -1375,7 +1374,6 @@ void iCal_Get_event_property(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     PA_ReturnObject(params, status);
@@ -1428,7 +1426,6 @@ void iCal_Remove_event(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     PA_ReturnObject(params, status);
@@ -1521,7 +1518,6 @@ void iCal_Create_calendar(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     
@@ -1578,7 +1574,6 @@ void iCal_Set_calendar_property(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     
@@ -1614,7 +1609,6 @@ void iCal_Get_calendar_property(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     
@@ -1651,9 +1645,7 @@ void iCal_Remove_calendar(PA_PluginParameters params) {
                 ob_set_b(status, L"success", false);
                 ob_set_s(status, L"errorMessage", "option is missing");
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
-        
     }
     PA_ReturnObject(params, status);
 }
@@ -1770,7 +1762,6 @@ void iCal_QUERY_EVENT(PA_PluginParameters params) {
                     ob_set_s(status, L"errorMessage", "invalid startDate");
                 }
             }
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     PA_ReturnObject(params, status);
@@ -1809,7 +1800,6 @@ void iCal_GET_CALENDAR_LIST(PA_PluginParameters params) {
             
             ob_set_c(status, L"calendars", _calendars);
             
-            _releaseCalendarStore(defaultCalendarStore);
         }
     }
     
@@ -1824,86 +1814,70 @@ void iCal_Get_default_calendar(PA_PluginParameters params) {
         
         defaultCalendarStore = _getDefaultCalendarStore();
         
-        if(!defaultCalendarStore){
-            EKEventStore *defaultCalendarStore = [[EKEventStore alloc]init];
+        if(defaultCalendarStore) {
             
-            if(defaultCalendarStore) {
-                NSArray<EKSource *> *delegateSources = [defaultCalendarStore delegateSources];
-                if(delegateSources) {
-                    
-                    delegateSources = [delegateSources arrayByAddingObjectsFromArray:[defaultCalendarStore sources]];
-                    
-                    EKEventStore *_defaultCalendarStore = [[EKEventStore alloc]initWithSources:delegateSources];
-                    if(_defaultCalendarStore) {
-                        [defaultCalendarStore release];
-                        defaultCalendarStore = _defaultCalendarStore;
-                    }
-                }
+            NSArray<EKSource *> *delegateSources = [defaultCalendarStore delegateSources];
+            
+            EKCalendar *calendar = defaultCalendarStore.defaultCalendarForNewEvents;
+            
+            if(calendar) {
                 
-                EKCalendar *calendar = defaultCalendarStore.defaultCalendarForNewEvents;
+                ob_set_b(status, L"success", true);
                 
-                if(calendar) {
+                PA_ObjectRef _calendar = PA_CreateObject();
+                
+                ob_set_calendar(_calendar, calendar);
+                
+                ob_set_o(status, L"calendar", _calendar);
+                
+                NSArray<EKSource *> *sources = [defaultCalendarStore sources];
+                
+                PA_CollectionRef _sources = PA_CreateCollection();
+                
+                for(NSUInteger i = 0; i < [sources count]; ++i) {
                     
-                    ob_set_b(status, L"success", true);
+                    EKSource *source = [sources objectAtIndex:i];
                     
-                    PA_ObjectRef _calendar = PA_CreateObject();
+                    PA_ObjectRef s = PA_CreateObject();
                     
-                    ob_set_calendar(_calendar, calendar);
-                    
-                    ob_set_o(status, L"calendar", _calendar);
-                    
-                    NSArray<EKSource *> *sources = [defaultCalendarStore sources];
-                    
-                    PA_CollectionRef _sources = PA_CreateCollection();
-                    
-                    for(NSUInteger i = 0; i < [sources count]; ++i) {
-                        
-                        EKSource *source = [sources objectAtIndex:i];
-                        
-                        PA_ObjectRef s = PA_CreateObject();
-                        
-                        if (@available(macOS 13.0, *)) {
-                            ob_set_b(s, L"isDelegate", source.isDelegate);
-                        }
-                        
-                        ob_set_v(s, L"uid", source.sourceIdentifier);
-                        ob_set_v(s, L"title", source.title);
-                        
-                        switch (source.sourceType) {
-                            case EKSourceTypeLocal:
-                                ob_set_v(s, L"type", @"Local");
-                                break;
-                            case EKSourceTypeCalDAV:
-                                ob_set_v(s, L"type", @"CalDAV");
-                                break;
-                            case EKSourceTypeExchange:
-                                ob_set_v(s, L"type", @"Exchange");
-                                break;
-                            case EKSourceTypeSubscribed:
-                                ob_set_v(s, L"type", @"Subscription");
-                                break;
-                            case EKSourceTypeBirthdays:
-                                ob_set_v(s, L"type", @"Birthday");
-                                break;
-                            case EKSourceTypeMobileMe:
-                                ob_set_v(s, L"type", @"MobileMe");
-                                break;
-                        }
-                        
-                        PA_Variable v = PA_CreateVariable(eVK_Object);
-                        PA_SetObjectVariable(&v, s);
-                        PA_SetCollectionElement(_sources, PA_GetCollectionLength(_sources), v);
-                        PA_ClearVariable(&v);
-                        
+                    if (@available(macOS 13.0, *)) {
+                        ob_set_b(s, L"isDelegate", source.isDelegate);
                     }
                     
-                    ob_set_c(status, L"sources", _sources);
+                    ob_set_v(s, L"uid", source.sourceIdentifier);
+                    ob_set_v(s, L"title", source.title);
+                    
+                    switch (source.sourceType) {
+                        case EKSourceTypeLocal:
+                            ob_set_v(s, L"type", @"Local");
+                            break;
+                        case EKSourceTypeCalDAV:
+                            ob_set_v(s, L"type", @"CalDAV");
+                            break;
+                        case EKSourceTypeExchange:
+                            ob_set_v(s, L"type", @"Exchange");
+                            break;
+                        case EKSourceTypeSubscribed:
+                            ob_set_v(s, L"type", @"Subscription");
+                            break;
+                        case EKSourceTypeBirthdays:
+                            ob_set_v(s, L"type", @"Birthday");
+                            break;
+                        case EKSourceTypeMobileMe:
+                            ob_set_v(s, L"type", @"MobileMe");
+                            break;
+                    }
+                    
+                    PA_Variable v = PA_CreateVariable(eVK_Object);
+                    PA_SetObjectVariable(&v, s);
+                    PA_SetCollectionElement(_sources, PA_GetCollectionLength(_sources), v);
+                    PA_ClearVariable(&v);
+                    
                 }
-                _releaseCalendarStore(defaultCalendarStore);
+                
+                ob_set_c(status, L"sources", _sources);
             }
         }
-        
-        
     }
     
     PA_ReturnObject(params, status);

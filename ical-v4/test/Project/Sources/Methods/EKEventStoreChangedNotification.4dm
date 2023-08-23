@@ -1,7 +1,7 @@
 //%attributes = {}
 /*
 
-callback received no parameters
+callback receives no parameters
 
 */
 
