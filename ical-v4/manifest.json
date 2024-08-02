@@ -4,7 +4,7 @@
     "commands": [
         {
             "theme": "iCal Calendar Store",
-            "syntax": "iCal Request permisson:J",
+            "syntax": "iCal Request permission:J",
             "threadSafe": true
         },
         {
