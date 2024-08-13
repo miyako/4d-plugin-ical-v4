@@ -1,19 +1,19 @@
 //%attributes = {}
-$status:=iCal Request permisson 
+$status:=iCal Request permission
 
 If ($status.success)
 	
-	$status:=iCal GET CALENDAR LIST 
+	$status:=iCal GET CALENDAR LIST
 	
 	If ($status.success)
 		$calendars:=$status.calendars
-		$calendars:=$calendars.query("title == :1";"販売")
+		$calendars:=$calendars.query("title == :1"; "販売")
 		
 		
 	End if 
 	
 	
-	$status:=iCal Get default calendar 
+	$status:=iCal Get default calendar
 	
 	If ($status.success)
 		
@@ -32,11 +32,11 @@ If ($status.success)
 		$options.recurrenceRule.recurrenceEnd:=New object:C1471
 		$options.recurrenceRule.recurrenceEnd.occurrenceCount:=3
 		
-		$status:=iCal Create event ($options)
+		$status:=iCal Create event($options)
 		
 		If ($status.success)
 			
-			$event:=New object:C1471("uid";$status.event.uid)  //clear other properties
+			$event:=New object:C1471("uid"; $status.event.uid)  //clear other properties
 			
 			$event.recurrenceRule:=New object:C1471
 			$event.recurrenceRule.recurrenceType:=0  //Daily
@@ -44,7 +44,7 @@ If ($status.success)
 			$event.recurrenceRule.recurrenceEnd:=New object:C1471
 			$event.recurrenceRule.recurrenceEnd.occurrenceCount:=3
 			
-			$status:=iCal Set event property ($event)
+			$status:=iCal Set event property($event)
 			
 		End if 
 		

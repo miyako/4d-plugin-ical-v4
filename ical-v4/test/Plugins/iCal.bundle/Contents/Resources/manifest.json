@@ -63,13 +63,18 @@
             "threadSafe": true
         },
         {
-            "theme": "Notification",
+            "theme": "iCal Notification",
             "syntax": "iCal SET NOTIFICATION METHOD(&T)",
             "threadSafe": false
         },
         {
-            "theme": "Notification",
+            "theme": "iCal Notification",
             "syntax": "iCal Get notification method:T",
+            "threadSafe": true
+        },
+        {
+            "theme": "iCal Mode",
+            "syntax": "iCal KILL WORKER",
             "threadSafe": true
         }
     ]

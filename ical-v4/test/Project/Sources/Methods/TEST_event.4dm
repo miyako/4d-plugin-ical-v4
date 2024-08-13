@@ -1,5 +1,5 @@
 //%attributes = {}
-$status:=iCal Request permisson
+$status:=iCal Request permission
 
 If ($status.success)
 	

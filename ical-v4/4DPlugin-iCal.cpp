@@ -378,6 +378,10 @@ void PluginMain(PA_long32 selector, PA_PluginParameters params) {
             case 14 :
                 iCal_Get_notification_method(params);
                 break;
+                
+            case 15 :
+                iCal_KILL_WORKER(params);
+                break;
         }
         
     }
@@ -1898,6 +1902,17 @@ static void iCal_Set_notification_method(PA_PluginParameters params) {
         }
         
     }
+}
+
+static void iCal_KILL_WORKER(PA_PluginParameters params) {
+    
+    listenerLoopFinish();
+    
+    if(defaultCalendarStore) {
+        [defaultCalendarStore release];
+        defaultCalendarStore = nil;
+    }
+    
 }
 
 static void iCal_Get_notification_method(PA_PluginParameters params) {

@@ -54,10 +54,12 @@ void iCal_Set_event_property(PA_PluginParameters params);
 void iCal_Get_event_property(PA_PluginParameters params);
 void iCal_Remove_event(PA_PluginParameters params);
 
+static void iCal_KILL_WORKER(PA_PluginParameters params);
+
 static void iCal_Set_notification_method(PA_PluginParameters params);
 static void iCal_Get_notification_method(PA_PluginParameters params);
 
-static void listenerInit(void);
+//static void listenerInit(void);
 static void listenerLoop(void);
 static void listenerLoopStart(void);
 static void listenerLoopFinish(void);
