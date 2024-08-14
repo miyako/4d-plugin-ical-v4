@@ -365,11 +365,11 @@ void PluginMain(PA_long32 selector, PA_PluginParameters params) {
                 
             case kInitPlugin :
             case kServerInitPlugin :
-                OnStartup();
+                PA_RunInMainProcess((PA_RunInMainProcessProcPtr)OnStartup, NULL);
                 break;
                 
             case kCloseProcess :
-                OnCloseProcess();
+                PA_RunInMainProcess((PA_RunInMainProcessProcPtr)OnCloseProcess, NULL);
                 break;
                 
             case 13 :
