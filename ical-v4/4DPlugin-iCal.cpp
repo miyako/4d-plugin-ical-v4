@@ -545,13 +545,11 @@ EKEvent *ob_get_event(PA_ObjectRef options,
     if(options){
         if(calendarStore){
             NSString *uid = ob_get_v(options, L"uid");
-            if(uid){
-                
+            if((uid) && (![uid isEqualToString:@""])) {
                 NSArray *values = [calendarStore calendarItemsWithExternalIdentifier:uid];
                 if([values count]) {
                     value = [values objectAtIndex:0];
                 }
-                
             }
         }
     }
