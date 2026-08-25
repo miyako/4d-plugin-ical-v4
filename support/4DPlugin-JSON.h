@@ -137,6 +137,18 @@ void ob_set_v(PA_ObjectRef obj, const wchar_t *_key, NSString *value);
 // ob_set_u: convenience wrapper that stores an NSURL as its absoluteString
 // via ob_set_v. Does nothing if value is nil.
 void ob_set_u(PA_ObjectRef obj, const wchar_t *_key, NSURL *value);
+
+// ob_get_d / ob_set_d: bridge a JSON property to NSDate via the plugin
+// SDK's eVK_Date variable kind (PA_GetDateVariable/PA_SetDateVariable,
+// see 4DPluginAPI.h). eVK_Date carries only a calendar date (day/month/
+// year) -- there is no time-of-day component, matching 4D's own `Date`
+// language type as opposed to its separate `Time` type (eVK_Time). The
+// NSDate produced/consumed here is therefore always at midnight in the
+// current calendar's default time zone; any time-of-day precision in an
+// EventKit NSDate is not representable through this property and is
+// discarded on write.
+NSDate *ob_get_d(PA_ObjectRef obj, const wchar_t *_key);
+void ob_set_d(PA_ObjectRef obj, const wchar_t *_key, NSDate *value);
 #endif
 
 #endif /* PLUGIN_JSON_H */

@@ -662,6 +662,72 @@ void ob_set_u(PA_ObjectRef obj, const wchar_t *_key, NSURL *value) {
     }
 }
 
+NSDate *ob_get_d(PA_ObjectRef obj, const wchar_t *_key) {
+    
+    NSDate *value = nil;
+    
+    if(obj)
+    {
+        CUTF16String ukey;
+        json_wconv(_key, &ukey);
+        PA_Unistring key = PA_CreateUnistring((PA_Unichar *)ukey.c_str());
+        
+        if(PA_HasObjectProperty(obj, &key))
+        {
+            PA_Variable v = PA_GetObjectProperty(obj, &key);
+            if(PA_GetVariableKind(v) == eVK_Date)
+            {
+                short day = 0, month = 0, year = 0;
+                PA_GetDateVariable(v, &day, &month, &year);
+                
+                // 00-00-0000 is 4D's own "null date" convention -- leave
+                // value as nil rather than asking NSCalendar to build a
+                // date out of it.
+                if(year != 0 || month != 0 || day != 0)
+                {
+                    NSDateComponents *components = [[NSDateComponents alloc] init];
+                    components.day = day;
+                    components.month = month;
+                    components.year = year;
+                    components.hour = 0;
+                    components.minute = 0;
+                    components.second = 0;
+                    
+                    NSCalendar *calendar = [NSCalendar currentCalendar];
+                    value = [calendar dateFromComponents:components];
+                    [components release];
+                }
+            }
+        }
+        
+        PA_DisposeUnistring(&key);
+    }
+    
+    return value;
+}
+
+void ob_set_d(PA_ObjectRef obj, const wchar_t *_key, NSDate *value) {
+    
+    if(obj && value)
+    {
+        NSCalendar *calendar = [NSCalendar currentCalendar];
+        NSDateComponents *components = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay)
+                                                     fromDate:value];
+        
+        PA_Variable v = PA_CreateVariable(eVK_Date);
+        PA_SetDateVariable(&v, (short)[components day], (short)[components month], (short)[components year]);
+        
+        CUTF16String ukey;
+        json_wconv(_key, &ukey);
+        PA_Unistring key = PA_CreateUnistring((PA_Unichar *)ukey.c_str());
+        
+        PA_SetObjectProperty(obj, &key, v);
+        
+        PA_DisposeUnistring(&key);
+        PA_ClearVariable(&v);
+    }
+}
+
 #endif
 
 void ob_stringify(PA_ObjectRef obj, CUTF8String *value) {
