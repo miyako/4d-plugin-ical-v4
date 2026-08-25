@@ -1,3 +1,4 @@
 ical-v4/build/*
 ical-v4/test/userPreferences.*
 ical-v4/test/Project/DerivedData/*
+build/*
