@@ -58,6 +58,7 @@
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
+#import <Foundation/Foundation.h>
 #endif
 
 typedef std::basic_string<PA_Unichar> CUTF16String;
@@ -104,10 +105,38 @@ void ob_set_0(PA_ObjectRef obj, const wchar_t *_key);
 void ob_set_0(PA_ObjectRef obj, const char *_key);
 bool ob_is_defined(PA_ObjectRef obj, const wchar_t *_key);
 bool ob_get_a(PA_ObjectRef obj, const wchar_t *_key, CUTF8String *value);
+// ob_get_s: same signature and behavior as ob_get_a (reads a JSON string
+// property into a CUTF8String, returns whether the property was defined
+// at all) -- added as its own symbol because callers use this exact name.
+// Implemented as a thin forward to ob_get_a rather than a second copy of
+// the UTF-16/UTF-8 conversion logic.
+bool ob_get_s(PA_ObjectRef obj, const wchar_t *_key, CUTF8String *value);
 bool ob_get_b(PA_ObjectRef obj, const wchar_t *_key);
 double ob_get_n(PA_ObjectRef obj, const wchar_t *_key);
 PA_CollectionRef ob_get_c(PA_ObjectRef obj, const wchar_t *_key);
+// ob_get_o: getter analog of the existing ob_set_o -- every other setter
+// above (ob_set_b/ob_set_n/ob_set_c) already has a getter counterpart;
+// this one was simply missing.
+PA_ObjectRef ob_get_o(PA_ObjectRef obj, const wchar_t *_key);
 
 void ob_stringify(PA_ObjectRef obj, CUTF8String *value);
+
+#ifdef __APPLE__
+// Objective-C convenience accessors for a plain JSON string property,
+// read/written as a native NSString rather than a CUTF8String/CUTF16String
+// buffer -- used by plugins (e.g. iCal) that deal in NSString values
+// throughout their own Cocoa/EventKit-facing code. Apple-only: NSString
+// doesn't exist on the Windows build of this shared header, so these are
+// never declared (or callable) there.
+//
+// ob_get_v returns an autoreleased NSString (or nil if the property is
+// undefined or isn't a string) -- callers must NOT [release] the result.
+NSString *ob_get_v(PA_ObjectRef obj, const wchar_t *_key);
+void ob_set_v(PA_ObjectRef obj, const wchar_t *_key, NSString *value);
+
+// ob_set_u: convenience wrapper that stores an NSURL as its absoluteString
+// via ob_set_v. Does nothing if value is nil.
+void ob_set_u(PA_ObjectRef obj, const wchar_t *_key, NSURL *value);
+#endif
 
 #endif /* PLUGIN_JSON_H */

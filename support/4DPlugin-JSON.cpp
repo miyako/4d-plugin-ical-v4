@@ -496,6 +496,35 @@ bool ob_get_a(PA_ObjectRef obj, const wchar_t *_key, CUTF8String *value) {
     return is_defined;
 }
 
+bool ob_get_s(PA_ObjectRef obj, const wchar_t *_key, CUTF8String *value) {
+    return ob_get_a(obj, _key, value);
+}
+
+PA_ObjectRef ob_get_o(PA_ObjectRef obj, const wchar_t *_key) {
+    
+    PA_ObjectRef value = NULL;
+    
+    if(obj)
+    {
+        CUTF16String ukey;
+        json_wconv(_key, &ukey);
+        PA_Unistring key = PA_CreateUnistring((PA_Unichar *)ukey.c_str());
+        
+        if(PA_HasObjectProperty(obj, &key))
+        {
+            PA_Variable v = PA_GetObjectProperty(obj, &key);
+            if(PA_GetVariableKind(v) == eVK_Object)
+            {
+                value = PA_GetObjectVariable(v);
+            }
+        }
+        
+        PA_DisposeUnistring(&key);
+    }
+    
+    return value;
+}
+
 bool ob_get_b(PA_ObjectRef obj, const wchar_t *_key) {
     
     bool value = false;
@@ -569,6 +598,71 @@ PA_CollectionRef ob_get_c(PA_ObjectRef obj, const wchar_t *_key) {
     }
     return value;
 }
+
+#ifdef __APPLE__
+
+NSString *ob_get_v(PA_ObjectRef obj, const wchar_t *_key) {
+    
+    NSString *value = nil;
+    
+    if(obj)
+    {
+        CUTF16String ukey;
+        json_wconv(_key, &ukey);
+        PA_Unistring key = PA_CreateUnistring((PA_Unichar *)ukey.c_str());
+        
+        if(PA_HasObjectProperty(obj, &key))
+        {
+            PA_Variable v = PA_GetObjectProperty(obj, &key);
+            if(PA_GetVariableKind(v) == eVK_Unistring)
+            {
+                PA_Unistring uvalue = PA_GetStringVariable(v);
+                // stringWithCharacters:length: returns an autoreleased
+                // string -- callers must not [release] this.
+                value = [NSString stringWithCharacters:(const unichar *)uvalue.fString
+                                                 length:uvalue.fLength];
+            }
+        }
+        
+        PA_DisposeUnistring(&key);
+    }
+    
+    return value;
+}
+
+void ob_set_v(PA_ObjectRef obj, const wchar_t *_key, NSString *value) {
+    
+    if(obj && value)
+    {
+        PA_Variable v = PA_CreateVariable(eVK_Unistring);
+        CUTF16String ukey;
+        json_wconv(_key, &ukey);
+        
+        NSUInteger len = [value length];
+        std::vector<PA_Unichar> buf(len + 1);
+        [value getCharacters:(unichar *)&buf[0] range:NSMakeRange(0, len)];
+        CUTF16String uvalue((const PA_Unichar *)&buf[0], len);
+        
+        PA_Unistring key = PA_CreateUnistring((PA_Unichar *)ukey.c_str());
+        PA_Unistring valueStr = PA_CreateUnistring((PA_Unichar *)uvalue.c_str());
+        
+        PA_SetStringVariable(&v, &valueStr);
+        PA_SetObjectProperty(obj, &key, v);
+        
+        PA_DisposeUnistring(&key);
+        PA_ClearVariable(&v);
+    }
+}
+
+void ob_set_u(PA_ObjectRef obj, const wchar_t *_key, NSURL *value) {
+    
+    if(obj && value)
+    {
+        ob_set_v(obj, _key, [value absoluteString]);
+    }
+}
+
+#endif
 
 void ob_stringify(PA_ObjectRef obj, CUTF8String *value) {
     
