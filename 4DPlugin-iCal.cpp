@@ -399,9 +399,9 @@ NSColor *getRGBcolor(unsigned int rgb) {
     
     CGFloat red, green, blue;
     
-    red     = (CGFloat)(((rgb & 0x00FF0000) >> 16  ) / 0xFF);
-    green   = (CGFloat)(((rgb & 0x0000FF00) >> 8   ) / 0xFF);
-    blue    = (CGFloat)(((rgb & 0x000000FF)        ) / 0xFF);
+    red     = (CGFloat)((rgb & 0x00FF0000) >> 16  ) / 0xFF;
+    green   = (CGFloat)((rgb & 0x0000FF00) >> 8   ) / 0xFF;
+    blue    = (CGFloat)((rgb & 0x000000FF)        ) / 0xFF;
     
     color = [NSColor colorWithDeviceRed:red
                                   green:green
@@ -620,21 +620,18 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                         
                         if(title){
                             event.title = title;
-                            [title release];
                         }
                         
                         NSString *location = ob_get_v(options, L"location");
                         
                         if(location){
                             event.location = location;
-                            [location release];
                         }
                         
                         NSString *notes = ob_get_v(options, L"notes");
                         
                         if(notes){
                             event.notes = notes;
-                            [notes release];
                         }
                         
                         if(ob_is_defined(options, L"isAllDay")){
@@ -650,9 +647,9 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                             if(_url){
                                 
                                 event.URL = _url;
+                                [_url release];
                                 
                             }
-                            [url release];
                         }
                         
                         if(ob_is_defined(options, L"recurrenceRule")){
@@ -1455,7 +1452,6 @@ void iCal_Create_calendar(PA_PluginParameters params) {
                     
                     if(title){
                         calendar.title = title;
-                        [title release];
                     }
                     
                     NSArray<EKSource *> *sources = [defaultCalendarStore sources];
@@ -1476,8 +1472,6 @@ void iCal_Create_calendar(PA_PluginParameters params) {
                                 calendar.source = [_sources objectAtIndex:0];
                             }
                         }
-                        
-                        [source release];
                     }
                     
                     if(!calendar.source) {
@@ -1546,7 +1540,6 @@ void iCal_Set_calendar_property(PA_PluginParameters params) {
                     
                     if(title){
                         calendar.title = title;
-                        [title release];
                     }
                     
                     if(ob_is_defined(options, L"color")){
@@ -1677,8 +1670,12 @@ static NSString *eventForObject(NSString *objectID) {
         
         for(unsigned int i = 0; i < [events count]; ++i) {
             
+            if(PA_IsProcessDying()) {
+                break;
+            }
+            
             time_t now = time(0);
-            time_t elapsedTime = abs(startTime - now);
+            time_t elapsedTime = (now >= startTime) ? (now - startTime) : (startTime - now);
             if(elapsedTime > 0)
             {
                 startTime = now;
@@ -1732,8 +1729,12 @@ void iCal_QUERY_EVENT(PA_PluginParameters params) {
                             
                             for(unsigned int i = 0; i < [events count]; ++i) {
                                 
+                                if(PA_IsProcessDying()) {
+                                    break;
+                                }
+                                
                                 time_t now = time(0);
-                                time_t elapsedTime = abs(startTime - now);
+                                time_t elapsedTime = (now >= startTime) ? (now - startTime) : (startTime - now);
                                 if(elapsedTime > 0)
                                 {
                                     startTime = now;
@@ -1893,7 +1894,7 @@ static void iCal_Set_notification_method(PA_PluginParameters params) {
     {
         std::lock_guard<std::mutex> lock(globalMutex2);
         
-        if(arg1->fLength) {
+        if(arg1 && arg1->fLength) {
             iCalv4::LISTENER_METHOD = arg1->fString;
         }else{
             iCalv4::LISTENER_METHOD = (PA_Unichar *)"\0\0";
@@ -1915,7 +1916,16 @@ static void iCal_KILL_WORKER(PA_PluginParameters params) {
 
 static void iCal_Get_notification_method(PA_PluginParameters params) {
     
-    PA_ReturnString(params, (PA_Unichar *)iCalv4::LISTENER_METHOD.c_str());
+    CUTF16String method;
+    
+    if(1)
+    {
+        std::lock_guard<std::mutex> lock(globalMutex2);
+        
+        method = iCalv4::LISTENER_METHOD;
+    }
+    
+    PA_ReturnString(params, (PA_Unichar *)method.c_str());
     
 }
 
@@ -1955,7 +1965,15 @@ void listenerLoop()
         
         if(1)
         {
+            std::lock_guard<std::mutex> lock(globalMutex4);
+            
             PROCESS_SHOULD_RESUME = iCalv4::PROCESS_SHOULD_RESUME;
+        }
+        
+        if(1)
+        {
+            std::lock_guard<std::mutex> lock(globalMutex3);
+            
             PROCESS_SHOULD_TERMINATE = iCalv4::PROCESS_SHOULD_TERMINATE;
         }
         
@@ -1994,6 +2012,12 @@ void listenerLoop()
                     std::lock_guard<std::mutex> lock(globalMutex);
                     
                     notifications = iCalv4::notifications.size();
+                }
+                
+                if(1)
+                {
+                    std::lock_guard<std::mutex> lock(globalMutex3);
+                    
                     PROCESS_SHOULD_TERMINATE = iCalv4::PROCESS_SHOULD_TERMINATE;
                 }
             }
@@ -2012,6 +2036,8 @@ void listenerLoop()
         
         if(1)
         {
+            std::lock_guard<std::mutex> lock(globalMutex3);
+            
             PROCESS_SHOULD_TERMINATE = iCalv4::PROCESS_SHOULD_TERMINATE;
         }
         
@@ -2125,15 +2151,24 @@ void listenerLoopExecuteMethod()
     PA_Variable    params[1];
     params[0] = PA_CreateVariable(eVK_Unistring);
     
-    method_id_t methodId = PA_GetMethodID((PA_Unichar *)iCalv4::LISTENER_METHOD.c_str());
+    CUTF16String listenerMethod;
+    
+    if(1)
+    {
+        std::lock_guard<std::mutex> lock(globalMutex2);
+        
+        listenerMethod = iCalv4::LISTENER_METHOD;
+    }
+    
+    method_id_t methodId = PA_GetMethodID((PA_Unichar *)listenerMethod.c_str());
     
     if(methodId)
     {
         PA_ExecuteMethodByID(methodId, params, 0);
         
-    }else if(iCalv4::LISTENER_METHOD.length() != 0)
+    }else if(listenerMethod.length() != 0)
     {
-        PA_Unistring method = PA_CreateUnistring((PA_Unichar *)iCalv4::LISTENER_METHOD.c_str());
+        PA_Unistring method = PA_CreateUnistring((PA_Unichar *)listenerMethod.c_str());
         PA_SetStringVariable(&params[0], &method);
         
         PA_ExecuteCommandByID(1007 /* execute method */, params, 1);
