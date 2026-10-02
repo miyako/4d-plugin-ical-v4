@@ -26,6 +26,7 @@
 		D1DFC6C52420560E0079E97F /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1DFC6C42420560E0079E97F /* EventKit.framework */; };
 		D1DFC6C72420561B0079E97F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1DFC6C62420561B0079E97F /* Security.framework */; };
 		D1FA3ED5242067280032AEAC /* CalendarStore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D1FA3ED4242067280032AEAC /* CalendarStore.framework */; };
+		8CDC8C963B017F75621B9B0B /* constants.xlf in CopyFiles */ = {isa = PBXBuildFile; fileRef = D14D10DD1A03A8A5008B3411 /* constants.xlf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -36,6 +37,7 @@
 			dstSubfolderSpec = 7;
 			files = (
 				D134D4AC1A030BA0008D14EF /* manifest.json in CopyFiles */,
+				8CDC8C963B017F75621B9B0B /* constants.xlf in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
