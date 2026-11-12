@@ -25,7 +25,9 @@ void ob_set_p(PA_ObjectRef obj, const wchar_t *_key, PA_Picture value) {
     {
         if(value)
         {
-            PA_Variable v = PA_CreateVariable(eVK_Picture);
+            // eVK_Undefined: eVK_Picture would allocate a value that the shallow
+            // PA_Set*Variable below overwrites and leaks
+            PA_Variable v = PA_CreateVariable(eVK_Undefined);
             CUTF16String ukey;
             json_wconv(_key, &ukey);
             PA_Unistring key = PA_CreateUnistring((PA_Unichar *)ukey.c_str());
@@ -86,7 +88,9 @@ void ob_set_s(PA_ObjectRef obj, const char *_key, const char *_value) {
         PA_Unistring key = PA_CreateUnistring((PA_Unichar *)u16k.c_str());
         PA_Unistring value = PA_CreateUnistring((PA_Unichar *)u16v.c_str());
         
-        PA_Variable v = PA_CreateVariable(eVK_Unistring);
+        // eVK_Undefined: eVK_Unistring would allocate a value that the shallow
+        // PA_Set*Variable below overwrites and leaks
+        PA_Variable v = PA_CreateVariable(eVK_Undefined);
         PA_SetStringVariable(&v, &value);
         PA_SetObjectProperty(obj, &key, v);
         
@@ -103,7 +107,9 @@ void ob_set_s(PA_ObjectRef obj, const wchar_t *_key, const char *_value) {
     {
         if(_value)
         {
-            PA_Variable v = PA_CreateVariable(eVK_Unistring);
+            // eVK_Undefined: eVK_Unistring would allocate a value that the shallow
+            // PA_Set*Variable below overwrites and leaks
+            PA_Variable v = PA_CreateVariable(eVK_Undefined);
             CUTF16String ukey;
             
             json_wconv(_key, &ukey);
@@ -151,7 +157,9 @@ void ob_set_a(PA_ObjectRef obj, const wchar_t *_key, const wchar_t *_value) {
     {
         if(_value)
         {
-            PA_Variable v = PA_CreateVariable(eVK_Unistring);
+            // eVK_Undefined: eVK_Unistring would allocate a value that the shallow
+            // PA_Set*Variable below overwrites and leaks
+            PA_Variable v = PA_CreateVariable(eVK_Undefined);
             CUTF16String ukey;
             CUTF16String uvalue;
             json_wconv(_key, &ukey);
@@ -180,7 +188,9 @@ void ob_set_a(PA_ObjectRef obj, const wchar_t *_key, const CUTF16String *_value)
         // UTF-16 data as wchar_t there would misread the buffer width and
         // corrupt or over-read it. Only _key -- a real wchar_t string
         // literal from the caller -- goes through the normal conversion.
-        PA_Variable v = PA_CreateVariable(eVK_Unistring);
+        // eVK_Undefined: eVK_Unistring would allocate a value that the shallow
+        // PA_Set*Variable below overwrites and leaks
+        PA_Variable v = PA_CreateVariable(eVK_Undefined);
         CUTF16String ukey;
         json_wconv(_key, &ukey);
 
@@ -449,7 +459,11 @@ bool ob_get_a(PA_ObjectRef obj, const wchar_t *_key, CUTF8String *value) {
         
         if(is_defined)
         {
+            // PA_GetObjectProperty returns an owned copy: clear it, but only
+            // when the get succeeded (otherwise the variable is not initialised)
             PA_Variable v = PA_GetObjectProperty(obj, &key);
+            if(PA_GetLastError() == eER_NoErr)
+            {
             if(PA_GetVariableKind(v) == eVK_Unistring)
             {
                 PA_Unistring uvalue = PA_GetStringVariable(v);
@@ -488,6 +502,8 @@ bool ob_get_a(PA_ObjectRef obj, const wchar_t *_key, CUTF8String *value) {
                 }
 #endif
             }
+            PA_ClearVariable(&v);
+            }
         }
         
         PA_DisposeUnistring(&key);
@@ -513,9 +529,14 @@ PA_ObjectRef ob_get_o(PA_ObjectRef obj, const wchar_t *_key) {
         if(PA_HasObjectProperty(obj, &key))
         {
             PA_Variable v = PA_GetObjectProperty(obj, &key);
-            if(PA_GetVariableKind(v) == eVK_Object)
+            if(PA_GetLastError() == eER_NoErr)
             {
-                value = PA_GetObjectVariable(v);
+                if(PA_GetVariableKind(v) == eVK_Object)
+                {
+                    value = PA_GetObjectVariable(v);
+                }
+                // the parent object keeps the returned reference alive
+                PA_ClearVariable(&v);
             }
         }
         
@@ -538,9 +559,13 @@ bool ob_get_b(PA_ObjectRef obj, const wchar_t *_key) {
         if(PA_HasObjectProperty(obj, &key))
         {
             PA_Variable v = PA_GetObjectProperty(obj, &key);
-            if(PA_GetVariableKind(v) == eVK_Boolean)
+            if(PA_GetLastError() == eER_NoErr)
             {
-                value = PA_GetBooleanVariable(v);
+                if(PA_GetVariableKind(v) == eVK_Boolean)
+                {
+                    value = PA_GetBooleanVariable(v);
+                }
+                PA_ClearVariable(&v);
             }
         }
         
@@ -563,9 +588,13 @@ double ob_get_n(PA_ObjectRef obj, const wchar_t *_key) {
         if(PA_HasObjectProperty(obj, &key))
         {
             PA_Variable v = PA_GetObjectProperty(obj, &key);
-            if(PA_GetVariableKind(v) == eVK_Real)
+            if(PA_GetLastError() == eER_NoErr)
             {
-                value = PA_GetRealVariable(v);
+                if(PA_GetVariableKind(v) == eVK_Real)
+                {
+                    value = PA_GetRealVariable(v);
+                }
+                PA_ClearVariable(&v);
             }
         }
         
@@ -588,9 +617,14 @@ PA_CollectionRef ob_get_c(PA_ObjectRef obj, const wchar_t *_key) {
         if(PA_HasObjectProperty(obj, &key))
         {
             PA_Variable v = PA_GetObjectProperty(obj, &key);
-            if(PA_GetVariableKind(v) == eVK_Collection)
+            if(PA_GetLastError() == eER_NoErr)
             {
-                value = PA_GetCollectionVariable(v);
+                if(PA_GetVariableKind(v) == eVK_Collection)
+                {
+                    value = PA_GetCollectionVariable(v);
+                }
+                // the parent object keeps the returned reference alive
+                PA_ClearVariable(&v);
             }
         }
         
@@ -614,13 +648,17 @@ NSString *ob_get_v(PA_ObjectRef obj, const wchar_t *_key) {
         if(PA_HasObjectProperty(obj, &key))
         {
             PA_Variable v = PA_GetObjectProperty(obj, &key);
-            if(PA_GetVariableKind(v) == eVK_Unistring)
+            if(PA_GetLastError() == eER_NoErr)
             {
-                PA_Unistring uvalue = PA_GetStringVariable(v);
-                // stringWithCharacters:length: returns an autoreleased
-                // string -- callers must not [release] this.
-                value = [NSString stringWithCharacters:(const unichar *)uvalue.fString
-                                                 length:uvalue.fLength];
+                if(PA_GetVariableKind(v) == eVK_Unistring)
+                {
+                    PA_Unistring uvalue = PA_GetStringVariable(v);
+                    // stringWithCharacters:length: returns an autoreleased
+                    // string -- callers must not [release] this.
+                    value = [NSString stringWithCharacters:(const unichar *)uvalue.fString
+                                                     length:uvalue.fLength];
+                }
+                PA_ClearVariable(&v);
             }
         }
         
@@ -634,7 +672,9 @@ void ob_set_v(PA_ObjectRef obj, const wchar_t *_key, NSString *value) {
     
     if(obj && value)
     {
-        PA_Variable v = PA_CreateVariable(eVK_Unistring);
+        // eVK_Undefined: eVK_Unistring would allocate a value that the shallow
+        // PA_Set*Variable below overwrites and leaks
+        PA_Variable v = PA_CreateVariable(eVK_Undefined);
         CUTF16String ukey;
         json_wconv(_key, &ukey);
         
@@ -675,28 +715,32 @@ NSDate *ob_get_d(PA_ObjectRef obj, const wchar_t *_key) {
         if(PA_HasObjectProperty(obj, &key))
         {
             PA_Variable v = PA_GetObjectProperty(obj, &key);
-            if(PA_GetVariableKind(v) == eVK_Date)
+            if(PA_GetLastError() == eER_NoErr)
             {
-                short day = 0, month = 0, year = 0;
-                PA_GetDateVariable(v, &day, &month, &year);
-                
-                // 00-00-0000 is 4D's own "null date" convention -- leave
-                // value as nil rather than asking NSCalendar to build a
-                // date out of it.
-                if(year != 0 || month != 0 || day != 0)
+                if(PA_GetVariableKind(v) == eVK_Date)
                 {
-                    NSDateComponents *components = [[NSDateComponents alloc] init];
-                    components.day = day;
-                    components.month = month;
-                    components.year = year;
-                    components.hour = 0;
-                    components.minute = 0;
-                    components.second = 0;
+                    short day = 0, month = 0, year = 0;
+                    PA_GetDateVariable(v, &day, &month, &year);
+                
+                    // 00-00-0000 is 4D's own "null date" convention -- leave
+                    // value as nil rather than asking NSCalendar to build a
+                    // date out of it.
+                    if(year != 0 || month != 0 || day != 0)
+                    {
+                        NSDateComponents *components = [[NSDateComponents alloc] init];
+                        components.day = day;
+                        components.month = month;
+                        components.year = year;
+                        components.hour = 0;
+                        components.minute = 0;
+                        components.second = 0;
                     
-                    NSCalendar *calendar = [NSCalendar currentCalendar];
-                    value = [calendar dateFromComponents:components];
-                    [components release];
+                        NSCalendar *calendar = [NSCalendar currentCalendar];
+                        value = [calendar dateFromComponents:components];
+                        [components release];
+                    }
                 }
+                PA_ClearVariable(&v);
             }
         }
         

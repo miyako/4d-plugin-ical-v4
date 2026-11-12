@@ -500,7 +500,9 @@ NSArray *ob_get_calendars(PA_ObjectRef options,
             if(calendars){
                 value = [[NSMutableArray alloc]init];
                 for(PA_long32 i = 0; i < PA_GetCollectionLength(calendars); ++i){
+                    // owned copy: skip on error, otherwise clear after use
                     PA_Variable v = PA_GetCollectionElement(calendars, i);
+                    if(PA_GetLastError() != eER_NoErr) continue;
                     if(PA_GetVariableKind(v) == eVK_Object){
                         PA_ObjectRef o = PA_GetObjectVariable(v);
                         if(o){
@@ -527,6 +529,7 @@ NSArray *ob_get_calendars(PA_ObjectRef options,
                             }
                         }
                     }
+                    PA_ClearVariable(&v);
                 }
             }
         }
@@ -704,10 +707,13 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                                     PA_CollectionRef _daysOfTheWeek = ob_get_c(_recurrenceRule, L"daysOfTheWeek");
                                     if(_daysOfTheWeek){
                                         for(PA_long32 i = 0; i < PA_GetCollectionLength(_daysOfTheWeek); ++i){
+                                            // owned copy: skip on error, otherwise clear after use
                                             PA_Variable v = PA_GetCollectionElement(_daysOfTheWeek, i);
+                                            if(PA_GetLastError() != eER_NoErr) continue;
                                             if(PA_GetVariableKind(v) == eVK_Real){
                                                 [daysOfTheWeek addObject:[NSNumber numberWithInt:(int)PA_GetRealVariable(v)]];
                                             }
+                                            PA_ClearVariable(&v);
                                         }
                                     }
                                 }
@@ -718,10 +724,13 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                                     PA_CollectionRef _daysOfTheMonth = ob_get_c(_recurrenceRule, L"daysOfTheMonth");
                                     if(_daysOfTheMonth){
                                         for(PA_long32 i = 0; i < PA_GetCollectionLength(_daysOfTheMonth); ++i){
+                                            // owned copy: skip on error, otherwise clear after use
                                             PA_Variable v = PA_GetCollectionElement(_daysOfTheMonth, i);
+                                            if(PA_GetLastError() != eER_NoErr) continue;
                                             if(PA_GetVariableKind(v) == eVK_Real){
                                                 [daysOfTheMonth addObject:[NSNumber numberWithInt:(int)PA_GetRealVariable(v)]];
                                             }
+                                            PA_ClearVariable(&v);
                                         }
                                     }
                                 }
@@ -732,10 +741,13 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                                     PA_CollectionRef _monthsOfTheYear = ob_get_c(_recurrenceRule, L"monthsOfTheYear");
                                     if(_monthsOfTheYear){
                                         for(PA_long32 i = 0; i < PA_GetCollectionLength(_monthsOfTheYear); ++i){
+                                            // owned copy: skip on error, otherwise clear after use
                                             PA_Variable v = PA_GetCollectionElement(_monthsOfTheYear, i);
+                                            if(PA_GetLastError() != eER_NoErr) continue;
                                             if(PA_GetVariableKind(v) == eVK_Real){
                                                 [monthsOfTheYear addObject:[NSNumber numberWithInt:(int)PA_GetRealVariable(v)]];
                                             }
+                                            PA_ClearVariable(&v);
                                         }
                                     }
                                 }
@@ -746,10 +758,13 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                                     PA_CollectionRef _weeksOfTheYear = ob_get_c(_recurrenceRule, L"weeksOfTheYear");
                                     if(_weeksOfTheYear){
                                         for(PA_long32 i = 0; i < PA_GetCollectionLength(_weeksOfTheYear); ++i){
+                                            // owned copy: skip on error, otherwise clear after use
                                             PA_Variable v = PA_GetCollectionElement(_weeksOfTheYear, i);
+                                            if(PA_GetLastError() != eER_NoErr) continue;
                                             if(PA_GetVariableKind(v) == eVK_Real){
                                                 [weeksOfTheYear addObject:[NSNumber numberWithInt:(int)PA_GetRealVariable(v)]];
                                             }
+                                            PA_ClearVariable(&v);
                                         }
                                     }
                                 }
@@ -760,10 +775,13 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                                     PA_CollectionRef _daysOfTheYear = ob_get_c(_recurrenceRule, L"daysOfTheYear");
                                     if(_daysOfTheYear){
                                         for(PA_long32 i = 0; i < PA_GetCollectionLength(_daysOfTheYear); ++i){
+                                            // owned copy: skip on error, otherwise clear after use
                                             PA_Variable v = PA_GetCollectionElement(_daysOfTheYear, i);
+                                            if(PA_GetLastError() != eER_NoErr) continue;
                                             if(PA_GetVariableKind(v) == eVK_Real){
                                                 [daysOfTheYear addObject:[NSNumber numberWithInt:(int)PA_GetRealVariable(v)]];
                                             }
+                                            PA_ClearVariable(&v);
                                         }
                                     }
                                 }
@@ -774,10 +792,13 @@ void ob_set_event_prop(PA_ObjectRef status, PA_ObjectRef options,
                                     PA_CollectionRef _setPositions = ob_get_c(_recurrenceRule, L"setPositions");
                                     if(_setPositions){
                                         for(PA_long32 i = 0; i < PA_GetCollectionLength(_setPositions); ++i){
+                                            // owned copy: skip on error, otherwise clear after use
                                             PA_Variable v = PA_GetCollectionElement(_setPositions, i);
+                                            if(PA_GetLastError() != eER_NoErr) continue;
                                             if(PA_GetVariableKind(v) == eVK_Real){
                                                 [setPositions addObject:[NSNumber numberWithInt:(int)PA_GetRealVariable(v)]];
                                             }
+                                            PA_ClearVariable(&v);
                                         }
                                     }
                                 }
@@ -2149,7 +2170,9 @@ void listenerLoopExecuteMethod()
      */
     
     PA_Variable    params[1];
-    params[0] = PA_CreateVariable(eVK_Unistring);
+    // eVK_Undefined: eVK_Unistring would allocate a string that the shallow
+    // PA_SetStringVariable below overwrites and leaks
+    params[0] = PA_CreateVariable(eVK_Undefined);
     
     CUTF16String listenerMethod;
     
@@ -2164,7 +2187,9 @@ void listenerLoopExecuteMethod()
     
     if(methodId)
     {
-        PA_ExecuteMethodByID(methodId, params, 0);
+        PA_Variable result = PA_ExecuteMethodByID(methodId, params, 0);
+        // any return value is owned by the caller
+        if(PA_GetLastError() == eER_NoErr) PA_ClearVariable(&result);
         
     }else if(listenerMethod.length() != 0)
     {
